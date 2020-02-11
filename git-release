@@ -5,14 +5,14 @@ function init {
 	if [ -z "$RELEASE_VERSION" ]
 	then
 		echo "Enter Release Version (e.g. 16_07 or 1.0.0):"
-		read RELEASE_VERSION
+		read -r RELEASE_VERSION
 	fi
 
 	RELEASE_CANDIDATE=$2
 	if [ -z "$RELEASE_CANDIDATE" ]
 	then
 		echo "Enter Release Candidate Version (e.g. 1,2,3... or blank for 0, first roll will be 1):"
-		read RELEASE_CANDIDATE
+		read -r RELEASE_CANDIDATE
 	fi
 
 	if [ -z "$RELEASE_CANDIDATE" ]
@@ -85,7 +85,7 @@ function checkout {
 	if [ -z "$LATEST" ]
 	then
 		echo "Select Branch to Add: (X = cancel)"
-		read CHOICE
+		read -r CHOICE
 		if [ "$CHOICE" = "X" ] || [ "$CHOICE" = "x" ] || [ -z "$CHOICE" ]
 			then exit;
 		fi
@@ -304,7 +304,7 @@ function stage {
 	if [ ! -z "$STAGE_DEPLOY_URL" ]
 	then
 		echo "Do you want to deploy the '$(stagebranch)' branch to the staging branch location? (y/n)"
-		read DEPLOY_IT
+		read -r DEPLOY_IT
 
 		if [ "$DEPLOY_IT" = "Y" ] || [ "$DEPLOY_IT" = "y" ]
 		then
@@ -327,7 +327,7 @@ function qa {
 	if [ ! -z "$QA_DEPLOY_URL" ]
 	then
 		echo "Do you want to deploy the '$(qabranch)' branch to the staging branch location? (y/n)"
-		read DEPLOY_IT
+		read -r DEPLOY_IT
 
 		if [ "$DEPLOY_IT" = "Y" ] || [ "$DEPLOY_IT" = "y" ]
 		then
@@ -347,7 +347,7 @@ function deploy {
 	if [ -z "$DEPLOY_ENV" ]
 		then
 		echo "Enter Deploy Environment (dev/stage/qa/prod)"
-		read DEPLOY_ENV
+		read -r DEPLOY_ENV
 	fi
 	if [ "$DEPLOY_ENV" = "prod" ]
 		then
@@ -397,7 +397,7 @@ function merge {
 	if [ "$MERGE_TO_BRANCH" = "$(masterbranch)" ]
 		then
 		echo "It's customary to Tag when merging to $(masterbranch), shall we tag with release? (y/n)"
-		read PUSH
+		read -r PUSH
 		if [ "$PUSH" = "y" ] || [ "$PUSH" = "Y" ]
 			then
 			tag
@@ -420,7 +420,7 @@ function devbranches {
 		then
 			echo "There is no development branch configured (in git config --local releases.devbranch)..."
 			echo "Enter your development branch name:"
-			read DEV_BRANCH
+			read -r DEV_BRANCH
 			git config --local --replace-all releases.devbranch $DEV_BRANCH
 	fi
 	fetchall
@@ -435,7 +435,7 @@ function setdevdeployurl {
 	if [ -z "$DEPLOY_URL" ]
 	then
 		echo "Enter the Rest URL to call to deploy the '$(devbranch)' branch. Blank to disable branch deployment."
-		read DEPLOY_URL
+		read -r DEPLOY_URL
 	fi
 
 	if [ -z "$DEPLOY_URL" ]
@@ -454,7 +454,7 @@ function stagebranches {
 		then
 			echo "There is no staging branch configured (in git config --local releases.stagebranch)..."
 			echo "Enter your staging branch name:"
-			read STAGE_BRANCH
+			read -r STAGE_BRANCH
 			git config --local --replace-all releases.stagebranch $STAGE_BRANCH
 	fi
 	fetchall
@@ -465,11 +465,11 @@ function stagebranches {
 # -- list the feature branches currently merged into the staging branch
 function qabranches {
 	QA_BRANCH=$(qabranch)
-	if [ -z "QA_BRANCH" ]
+	if [ -z "$QA_BRANCH" ]
 		then
 			echo "There is no QA branch configured (in git config --local releases.qabranch)..."
 			echo "Enter your QA branch name:"
-			read QA_BRANCH
+			read -r QA_BRANCH
 			git config --local --replace-all releases.qabranch $QA_BRANCH
 	fi
 	fetchall
@@ -483,7 +483,7 @@ function setstagedeployurl {
 	if [ -z "$DEPLOY_URL" ]
 	then
 		echo "Enter the Rest URL to call to deploy the '$(stagebranch)' branch. Blank to disable branch deployment."
-		read DEPLOY_URL
+		read -r DEPLOY_URL
 	fi
 
 	if [ -z "$DEPLOY_URL" ]
@@ -500,7 +500,7 @@ function setqadeployurl {
 	if [ -z "$DEPLOY_URL" ]
 	then
 		echo "Enter the Rest URL to call to deploy the '$(qabranch)' branch. Blank to disable branch deployment."
-		read DEPLOY_URL
+		read -r DEPLOY_URL
 	fi
 
 	if [ -z "$DEPLOY_URL" ]
@@ -536,7 +536,7 @@ function devfeature {
 	fi
 
 	echo "Push '$DEV_BRANCH' up to Origin? (y/n)"
-	read PUSH
+	read -r PUSH
 	if [ "$PUSH" = "y" ] || [ "$PUSH" = "Y" ]
 		then
 		git push origin $DEV_BRANCH
@@ -545,7 +545,7 @@ function devfeature {
 		if [ ! -z "$DEV_DEPLOY_URL" ]
 		then
 			echo "Do you want to deploy the '$(devbranch)' branch to the dev branch location? (y/n)"
-			read DEPLOY_IT
+			read -r DEPLOY_IT
 
 			if [ "$DEPLOY_IT" = "Y" ] || [ "$DEPLOY_IT" = "y" ]
 			then
@@ -579,7 +579,7 @@ function updatelocal {
 		echo "y - to stash and restore after completed"
 		echo "n - to pull on top of your local changes - may cause conflicts"
 		echo "x to exit now"
-		read STASH_IT
+		read -r STASH_IT
 
 		if [ "$STASH_IT" == "Y" ] ||  [ "$STASH_IT" == "y" ]
 		then
@@ -616,7 +616,7 @@ function updatelocal {
 				echo "Local Branch $BRANCH is Ahead of origin."
 				echo "Not Pulling"
 				echo "Press Enter to Continue"
-				read NOTHING
+				read -r NOTHING
 			fi
 		else
 			echo "Nothing to Update"
@@ -643,7 +643,7 @@ function newfeature {
 	echo "1 - feature/"
 	echo "2 - bugfix/"
 	echo "3 - hotfix/"
-	read THE_KIND
+	read -r THE_KIND
 	if [ "$THE_KIND" = "0" ]
 	then
 		PREFIX=""
@@ -661,7 +661,7 @@ function newfeature {
 
 	echo "Enter a descriptive name for your feature."
 	echo "(e.g. 'ISSUE-33_IncreaseTitleFont')"
-	read TITLE
+	read -r TITLE
 	if [ -z "$TITLE" ]
 	then
 		exit
@@ -693,7 +693,7 @@ function newfeature {
 
 	echo "Create the above branch? (y/n)"
 
-	read CREATE_IT
+	read -r CREATE_IT
 	if [ "$CREATE_IT" = "Y" ] || [ "$CREATE_IT" = "y" ]
 	then
 		echo "git fetch --all"
@@ -732,7 +732,7 @@ function pushfeature {
 
 
 	echo "Is this the branch you are trying to push? (y/n)"
-	read IS_THIS_IT
+	read -r IS_THIS_IT
 
 	if [ ! "$IS_THIS_IT" = "Y" ] && [ ! "$IS_THIS_IT" = "y" ]
 	then
@@ -774,7 +774,7 @@ function pushfeature {
 		echo "Please review and confirm before pushing the following changes:"
 		echo "$PF_AHEAD"
 		echo "Continue pushing '$FEATURE_CHOSEN' to origin? (y/n)"
-		read PUSH_AHEAD
+		read -r PUSH_AHEAD
 		if [ "$PUSH_AHEAD" = "Y" ] || [ "$PUSH_AHEAD" = "y" ]
 		then
 			echo "Pushing '$FEATURE_CHOSEN' to origin"
@@ -823,7 +823,7 @@ function pushfeature {
 
 
 	echo "Do you want to try to push this feature to the latest release candidate for '$(current)'? (y/n)"
-	read IS_IT
+	read -r IS_IT
 
 	if [ "$IS_IT" = "Y" ] || [ "$IS_IT" = "y" ]
 	then
@@ -858,7 +858,7 @@ function pushfeature {
 			echo "2 next - branches from '$(releasebranch)' to create '$(current)rc$((NEXT_REL_CANDIDATE+1))'; easier to diff changes between release candidates"
 			echo "3 append - merges on top of current release candidate '$(releasebranch)' - not recommended if you add a new feature. See 'help' for details."
 		fi
-		read ROLL_IT
+		read -r ROLL_IT
 		if [ "$ROLL_IT" = "1" ]
 		then
 			echo "Rolling new release from master branch"
@@ -889,7 +889,7 @@ function pushfeature {
 		if [ "$ROLL_SUCCESSFUL" = "0" ]
 		then
 			echo "Do you want to deploy this release candidate into the '$(stagebranch)' branch? (y/n)"
-			read STAGE_IT
+			read -r STAGE_IT
 
 			if [ "$STAGE_IT" = "Y" ] || [ "$STAGE_IT" = 'y' ]
 			then
@@ -923,7 +923,7 @@ function releasebranches {
 function createdevrelease {
 	echo "createrelease"
 	echo "Enter Current Release Number:"
-	read RELEASE_NUMBER
+	read -r RELEASE_NUMBER
 	init "$RELEASE_NUMBER-devrefresh" 0
 	DEV_BRANCHES=$(devbranches)
 	for BRANCH in $DEV_BRANCHES
@@ -945,21 +945,21 @@ function movedevbranch {
 
 function cleanup {
 	echo "Did we want to clean up the release branches?"
-	read CHOICE
+	read -r CHOICE
 	if [ "$CHOICE" = "Y" ] || [ "$CHOICE" = "y" ]
 		then
-		cleanrelease
+		cleanrelease "$@"
 	fi
 
 	echo "Did we want to purge the local merged branches?"
-	read CHOICE
+	read -r CHOICE
 	if [ "$CHOICE" = "Y" ] || [ "$CHOICE" = "y" ]
 		then
 		cleanupmergedlocalbranches
 	fi
 
 	echo "Did we want to purge the remote merged branches?"
-	read CHOICE
+	read -r CHOICE
 	if [ "$CHOICE" = "Y" ] || [ "$CHOICE" = "y" ]
 		then
 		cleanupmergedremotebranches
@@ -988,7 +988,7 @@ function cleanrelease {
 		do
 			RELEASE_ONLY=${OLD_RELEASE_BRANCH##*/}
 		    echo "Remove: $RELEASE_ONLY (y/n)"
-		    read CHOICE
+		    read -r CHOICE
 		    if [ "$CHOICE" = "Y" ] || [ "$CHOICE" = "y" ]
 			then
 				git push origin --delete $RELEASE_ONLY
@@ -1017,7 +1017,7 @@ function cleanupmergedlocalbranches {
 			git branch -d $RMM_BRANCH
 		else
 			echo "$RMM_BRANCH shows to be merged to master branch, remove? (y/n)"
-			read CHOICE
+			read -r CHOICE
 			if [ "$CHOICE" = "Y" ] || [ "$CHOICE" = "y" ] || [ "$CHOICE" = "auto" ]
 			then
 				git branch -d $RMM_BRANCH
@@ -1032,7 +1032,7 @@ function cleanupmergedremotebranches {
 	echo "IMPORTANT: You should have the most current release branch checked out"
 	echo "IMPORTANT: You should have have already run 'git release deploy' to have master branch merged in"
 	echo "Are these things handled? (y/n)"
-	read CONFIRMATION
+	read -r CONFIRMATION
 	if [ "$CONFIRMATION" = "Y" ] || [ "$CONFIRMATION" = "y" ]
 		then echo "Thanks for Confirming"
 		else exit
@@ -1057,7 +1057,7 @@ function cleanupmergedremotebranches {
 				git push origin --delete $RMM_BRANCH_ONLY
 			else
 				echo "$RMM_BRANCH_ONLY shows to be merged to master branch, remove? (y)"
-				read CHOICE
+				read -r CHOICE
 				if [ "$CHOICE" = "Y" ] || [ "$CHOICE" = "y" ] || [ "$CHOICE" = "auto" ]
 					then
 					git push origin --delete $RMM_BRANCH_ONLY
@@ -1087,7 +1087,7 @@ function push {
 function dump {
 	RELEASE_BRANCH=$(releasebranch)
 	echo "Dumping $RELEASE_BRANCH, correct? (Y/N):"
-	read DUMP
+	read -r DUMP
 	if [ "$DUMP" = "Y" ]
 	then
 		git reset --hard
@@ -1144,7 +1144,7 @@ function migratereleases {
 	fi
 
 	COMMIT=0
-	for RELEASE_FILE in `ls release-v*`
+	for RELEASE_FILE in release-v*
 	do
 		echo "Moving Release File: $RELEASE_FILE to releases folder."
 	    mv $RELEASE_FILE releases/
@@ -1174,12 +1174,12 @@ function findfeature {
 		echo "1 List all feature/ branches"
 		echo "2 List all bugfix/ branches"
 		echo "3 List all hotfix/ branches"
-		read SEARCH_TYPE
+		read -r SEARCH_TYPE
 
 		if [ "$SEARCH_TYPE" = "0" ]
 	    then
 			echo "Enter part of a Feature Branch name: (we will search for it) "
-			read FEATURE_QUERY
+			read -r FEATURE_QUERY
 		elif [ "$SEARCH_TYPE" = "1" ]
 		then
 			FEATURE_QUERY="feature/"
@@ -1221,7 +1221,7 @@ function findfeature {
 			OPTION=$((OPTION+1))
 		done
 		echo "Select Branch: (X = cancel)"
-		read CHOICE
+		read -r CHOICE
 		if [ "$CHOICE" = "X" ] || [ "$CHOICE" = "x" ] || [ -z "$CHOICE" ]
 			then exit;
 		fi
@@ -1233,14 +1233,14 @@ function findfeature {
 
 # -- allows the user to checkout a feature branch
 function checkoutfeature {
-	findfeature $1
-	trimfeaturename ${FEATURE_CHOSEN}
+	findfeature "$1"
+	trimfeaturename "${FEATURE_CHOSEN}"
 	if [ "$FEATURE_CHOSEN" = "$TRIMMED_FEATURE_NAME" ]
 	then
 		echo "checking out local branch $FEATURE_CHOSEN"
-		git checkout $FEATURE_CHOSEN
+		git checkout "$FEATURE_CHOSEN"
 	else
-		CF_BRANCHES=`git branch -a | grep -v remotes`
+		CF_BRANCHES=$(git branch -a | grep -v remotes)
 		BRANCH_FOUND=false
 
 		for BNAME in CF_BRANCHES
@@ -1251,13 +1251,13 @@ function checkoutfeature {
 			fi
 		done
 
-		if [ BRANCH_FOUND ]
+		if $BRANCH_FOUND
 		then
 			echo "local branch $TRIMMED_FEATURE_NAME already exists"
-			git checkout $TRIMMED_FEATURE_NAME
+			git checkout "$TRIMMED_FEATURE_NAME"
 		else
 			echo "checking out remote branch $FEATURE_CHOSEN as $TRIMMED_FEATURE_NAME"
-			git checkout -b $TRIMMED_FEATURE_NAME $FEATURE_CHOSEN
+			git checkout -b "$TRIMMED_FEATURE_NAME" "$FEATURE_CHOSEN"
 		fi
 	fi
 }
@@ -1285,7 +1285,7 @@ function feature {
 function add {
 	BRANCH_TO_ADD=$1
 	CURRENT_RELEASE=$(current)
-	if [ -z "CURRENT_RELEASE" ]
+	if [ -z "$CURRENT_RELEASE" ]
 		then
 		echo "No Release is Initialized"
 		exit 1;
@@ -1306,13 +1306,13 @@ function rm {
 		OPTION=$((OPTION+1))
 	done
 	echo "Select Branch to Remove: (X = cancel)"
-	read CHOICE
+	read -f CHOICE
 	if [ "$CHOICE" = "X" ] || [ "$CHOICE" = "x" ] || [ -z "$CHOICE" ]
 		then exit;
 	fi
 	RM_BRANCH_CHOOSEN=${OPTIONLIST[$CHOICE]}
 
-	remove $RM_BRANCH_CHOOSEN
+	remove "$RM_BRANCH_CHOOSEN"
 
 }
 
@@ -1329,6 +1329,115 @@ function remove {
 		fi
 	done
 	status
+}
+
+# -- Environment configuration
+function environment {
+  cmd=$1
+  shift
+
+  if command -v "env_$cmd" > /dev/null 2>&1
+  then
+    "env_$cmd" "$@"
+  else
+    echo "$cmd is not a valid environment command."
+  fi
+
+  if [ -z "$cmd" ]
+  then
+    echo "---------------------------"
+    echo "Environment Commands"
+    echo "---------------------------"
+    echo ""
+    echo "environment add [name] [branch]  -  Adds new environemnt configuration"
+    echo "environment rm [name]            -  Remove environemnt configuration"
+
+  fi
+}
+
+function env_add {
+  echo "Add an environment configuration"
+  ENVNAME="$1"
+  if [ -z "$ENVNAME" ]
+  then
+    echo "Enter Environment Name: "
+    read -r ENVNAME
+  fi
+
+  ENVBRANCH="$2"
+  if [ -z "$ENVBRANCH" ]
+  then
+    echo "Enter Environment Branch for $ENVNAME: "
+    read -r ENVBRANCH
+  fi
+  git config --add "releases.environments" "$ENVNAME"
+  git config --add "environment.$ENVNAME.branch" "$ENVBRANCH"
+  env_ls
+}
+
+function env_rm {
+  echo "Remove an environment configuration"
+	RM_ENVS=$(environments)
+	OPTION=0
+	OPTIONLIST=()
+	echo "Environments Found:"
+	for ENVITEM in $RM_ENVS
+	do
+		echo "$OPTION $ENVITEM"
+		OPTIONLIST[OPTION]=$ENVITEM
+		OPTION=$((OPTION+1))
+	done
+	echo "Select Environment to Remove: (X = cancel)"
+	read -r CHOICE
+	if [ "$CHOICE" = "X" ] || [ "$CHOICE" = "x" ] || [ -z "$CHOICE" ]
+		then exit;
+	fi
+	RM_ENV_CHOOSEN=${OPTIONLIST[$CHOICE]}
+
+	env_remove "$RM_ENV_CHOOSEN"
+}
+
+function env_remove {
+	RM_ENV_CHOOSEN=$1
+	RM_ENVS=$(environments)
+	clearenvironments
+	for RM_ENV in $RM_ENVS
+	do
+   if [	"$RM_ENV_CHOOSEN" != "$RM_ENV" ]
+   then
+     git config --add environments "$RM_ENV"
+   fi
+	done
+	git config --unset-all "environment.$RM_ENV.branch"
+	env_ls
+}
+
+function env_ls {
+  echo "-----------------------"
+  echo "Configired Environments"
+  echo "-----------------------"
+  for ENVNAME in $(environments)
+  do
+    ENVBRANCH=$(env_branch "$ENVNAME")
+    echo " - Name: ${ENVNAME}, Branch: ${ENVBRANCH}"
+  done
+  echo ""
+}
+
+# -- fetch branch for a given environment
+function env_branch {
+  ENVNAME=$1
+	git config --get "environment.$ENVNAME.branch"
+}
+
+# -- remove all the branches from the release
+function clearenvironments {
+	git config --unset-all releases.environments
+}
+
+# -- util - list all of the environments configured
+function environments {
+	git config --get-all releases.environments
 }
 
 # -- util - format the name for the current release branch
@@ -1656,6 +1765,8 @@ function help {
 
 COMMAND=$1
 
+shift
+
 if [ -z "$COMMAND" ]
 	then
 	echo " "
@@ -1668,4 +1779,4 @@ if [ -z "$COMMAND" ]
 	status
 fi
 
-$COMMAND $2 $3
+$COMMAND "$@"

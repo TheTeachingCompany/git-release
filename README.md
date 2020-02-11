@@ -7,16 +7,22 @@ Original Motivation: http://nvie.com/posts/a-successful-git-branching-model/
 Under the hood `git release` uses the git config system to store lists of branches, and creates release files that store the branch list for you.
 
 
-*Install:*
-Quick install: `curl -s -L https://raw.githubusercontent.com/neverbehind/git-release/master/install.sh | bash`
+##Installation
+
+###Quick install
+
+```
+curl -s -L https://raw.githubusercontent.com/neverbehind/git-release/master/install.sh | bash
+```
 
 
-Repo Install:
-* Checkout repo
-* `bash install.sh`
+###Repo Install
+
+1. Checkout repo
+1. Run `bash install.sh` from the repo
 
 
-*Usage Quick Start:*
+##Usage Quick Start
 
 > Most Common Process: Initialize release, add features, then create a the release by merging all branches in.
 
@@ -34,9 +40,9 @@ Repo Install:
 - `git release remove [full remote branch path]` to remove feature branches from the list
 - `git release status` to see what version you are on and the branches added
 - `git release roll` to roll out a new release candidate branch, which:
- - Creates a new branch based on release versioning, incrementing the RC
- - Commits the Branch list to the new branch
- - Merges in each of the added feature branches
+  - Creates a new branch based on release versioning, incrementing the RC
+  - Commits the Branch list to the new branch
+  - Merges in each of the added feature branches
 - `git release append` similar to roll, but doesn't create a new release branch, simple remerges all branches into the current RC
 - `git release next` similar to roll, but uses current release branch as the base branch, instead of master
 - `git release deploy` checkout master, and merge in release branch and tag commit with release tag.
