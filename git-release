@@ -291,50 +291,16 @@ function findconflicts {
 	fi
 }
 
+## Depreciated, use deploy [environment name]
 # -- merge the current release branch to the staging branch
 function stage {
-	RELEASE_BRANCH=$(releasebranch)
-	STAGE_BRANCH=$(stagebranch)
-	fetchall
-	NOOUTPUT=`git checkout $STAGE_BRANCH && git pull origin $STAGE_BRANCH`
-	git merge --no-ff --no-edit $RELEASE_BRANCH
-	git push origin $STAGE_BRANCH
-
-	STAGE_DEPLOY_URL=$(stagedeployurl)
-	if [ ! -z "$STAGE_DEPLOY_URL" ]
-	then
-		echo "Do you want to deploy the '$(stagebranch)' branch to the staging branch location? (y/n)"
-		read -r DEPLOY_IT
-
-		if [ "$DEPLOY_IT" = "Y" ] || [ "$DEPLOY_IT" = "y" ]
-		then
-			echo "Sending request to ($STAGE_DEPLOY_URL)"
-			curl $STAGE_DEPLOY_URL
-		fi
-	fi
+  deploy "stage"
 }
 
+## Depreciated, use deploy [environment name]
 # -- merge the current release branch to the qa branch
 function qa {
-	RELEASE_BRANCH=$(releasebranch)
-	QA_BRANCH=$(qabranch)
-	fetchall
-	NOOUTPUT=`git checkout $QA_BRANCH && git pull origin $QA_BRANCH`
-	git merge --no-ff --no-edit $RELEASE_BRANCH
-	git push origin $QA_BRANCH
-
-	QA_DEPLOY_URL=$(qadeployurl)
-	if [ ! -z "$QA_DEPLOY_URL" ]
-	then
-		echo "Do you want to deploy the '$(qabranch)' branch to the staging branch location? (y/n)"
-		read -r DEPLOY_IT
-
-		if [ "$DEPLOY_IT" = "Y" ] || [ "$DEPLOY_IT" = "y" ]
-		then
-			echo "Sending request to ($QA_DEPLOY_URL)"
-			curl $QA_DEPLOY_URL
-		fi
-	fi
+  deploy "qa"
 }
 
 # -- merge the current release candidate into master branch
@@ -346,39 +312,48 @@ function deploy {
 
 	if [ -z "$DEPLOY_ENV" ]
 		then
-		echo "Enter Deploy Environment (dev/stage/qa/prod)"
-		read -r DEPLOY_ENV
+		env_choose
+		DEPLOY_ENV="$CHOSEN_ENV"
 	fi
-	if [ "$DEPLOY_ENV" = "prod" ]
-		then
-		TRUNK_BRANCH=$(masterbranch)
-	fi
-	if [ "$DEPLOY_ENV" = "stage" ]
-		then
-		TRUNK_BRANCH=$(stagebranch)
-	fi
-	if [ "$DEPLOY_ENV" = "qa" ]
-		then
-		TRUNK_BRANCH=$(qabranch)
-	fi
-	if [ "$DEPLOY_ENV" = "dev" ]
-		then
-		TRUNK_BRANCH=$(devbranch)
-	fi
+  DEPLOY_BRANCH=$(env_branch "$DEPLOY_ENV")
+  DEPLOY_URL=$(env_deployurl "$DEPLOY_ENV")
+  DEPLOY_TAGGING=$(env_tagging "$DEPLOY_ENV")
 
-	git checkout $TRUNK_BRANCH
+  if [ -z "$DEPLOY_BRANCH" ]
+  then
+    echo "! ! ! ! "
+    echo "There is no deployment branch configured!"
+    echo "Please check your environment configurations."
+    echo "Run: git release environments"
+  fi
 
-	if [ "$DEPLOY_ENV" = "prod" ]
+	git checkout "$DEPLOY_BRANCH"
+
+	if [ "$DEPLOY_BRANCH" = "$(masterbranch)" ]
 		then
-		git pull origin $TRUNK_BRANCH
+		git pull origin "$DEPLOY_BRANCH"
 	else
-		git reset --hard $(masterbranch)
+		git reset --hard "$(masterbranch)"
 	fi
 
-	git merge --no-ff --no-edit $RELEASE_BRANCH
-	git push origin $TRUNK_BRANCH -f
+	git merge --no-ff --no-edit "$RELEASE_BRANCH"
+	git push origin "$DEPLOY_BRANCH" -f
 
-	if [ "$DEPLOY_ENV" = "prod" ]
+  if [ -n "$DEPLOY_URL" ]
+  then
+		echo "Do you want to trigger the deployment by hitting the deploy URL for the $DEPLOY_ENV environmeent?"
+		echo " Deploy URL: $DEPLOY_URL"
+		echo " (y/n) "
+		read -r DEPLOY_IT
+
+		if [ "$DEPLOY_IT" = "Y" ] || [ "$DEPLOY_IT" = "y" ]
+		then
+			echo "Sending request to ($DEPLOY_URL)"
+			curl "$DEPLOY_URL"
+		fi
+  fi
+
+	if [ "$DEPLOY_TAGGING" == "Y" ]
 		then
 		tag
 	fi
@@ -408,7 +383,7 @@ function merge {
 # -- tags master branch with the latest version
 function tag {
 	RELEASE_TAG="v$(version)"
-	git tag $RELEASE_TAG
+	git tag "$RELEASE_TAG"
 	git push --tags
 }
 
@@ -1310,9 +1285,9 @@ function rm {
 	if [ "$CHOICE" = "X" ] || [ "$CHOICE" = "x" ] || [ -z "$CHOICE" ]
 		then exit;
 	fi
-	RM_BRANCH_CHOOSEN=${OPTIONLIST[$CHOICE]}
+	RM_BRANCH_CHOSEN=${OPTIONLIST[$CHOICE]}
 
-	remove "$RM_BRANCH_CHOOSEN"
+	remove "$RM_BRANCH_CHOSEN"
 
 }
 
@@ -1367,48 +1342,69 @@ function env_add {
   ENVBRANCH="$2"
   if [ -z "$ENVBRANCH" ]
   then
-    echo "Enter Environment Branch for $ENVNAME: "
+    echo "Enter deploy branch for $ENVNAME: "
     read -r ENVBRANCH
   fi
+
+  echo "Enter a deploy URL for $ENVNAME: "
+  read -r ENVDEPLOYURL
+
+  echo "Do you want to create a release tag when deploying $ENVNAME?: "
+  read -r ENVTAGGING
+  if [ "$ENVTAGGING" == "y" ] || [ "$ENVTAGGING" == "Y" ]
+  then
+    ENVTAGGING="Y"
+  fi
+
   git config --add "releases.environments" "$ENVNAME"
   git config --add "environment.$ENVNAME.branch" "$ENVBRANCH"
+  git config --add "environment.$ENVNAME.deployurl" "$ENVDEPLOYURL"
+  git config --add "environment.$ENVNAME.tagging" "$ENVTAGGING"
   env_ls
 }
 
 function env_rm {
   echo "Remove an environment configuration"
-	RM_ENVS=$(environments)
+
+  env_choose
+
+	env_remove "$CHOSEN_ENV"
+}
+
+function env_choose {
+	ALL_ENVS=$(environments)
 	OPTION=0
 	OPTIONLIST=()
-	echo "Environments Found:"
-	for ENVITEM in $RM_ENVS
+	echo "Environments:"
+	for ENVITEM in $ALL_ENVS
 	do
 		echo "$OPTION $ENVITEM"
 		OPTIONLIST[OPTION]=$ENVITEM
 		OPTION=$((OPTION+1))
 	done
-	echo "Select Environment to Remove: (X = cancel)"
+	echo "Select Environment: (X = cancel)"
 	read -r CHOICE
 	if [ "$CHOICE" = "X" ] || [ "$CHOICE" = "x" ] || [ -z "$CHOICE" ]
 		then exit;
 	fi
-	RM_ENV_CHOOSEN=${OPTIONLIST[$CHOICE]}
-
-	env_remove "$RM_ENV_CHOOSEN"
+	CHOSEN_ENV=${OPTIONLIST[$CHOICE]}
 }
 
 function env_remove {
-	RM_ENV_CHOOSEN=$1
+	RM_ENV_CHOSEN=$1
+  echo "Removing: $RM_ENV_CHOSEN"
 	RM_ENVS=$(environments)
 	clearenvironments
 	for RM_ENV in $RM_ENVS
 	do
-   if [	"$RM_ENV_CHOOSEN" != "$RM_ENV" ]
+   if [	"$RM_ENV_CHOSEN" != "$RM_ENV" ]
    then
-     git config --add environments "$RM_ENV"
+     git config --add "releases.environments" "$RM_ENV"
    fi
 	done
 	git config --unset-all "environment.$RM_ENV.branch"
+	git config --unset-all "environment.$RM_ENV.deployurl"
+	git config --unset-all "environment.$RM_ENV.tagging"
 	env_ls
 }
 
@@ -1419,7 +1415,9 @@ function env_ls {
   for ENVNAME in $(environments)
   do
     ENVBRANCH=$(env_branch "$ENVNAME")
-    echo " - Name: ${ENVNAME}, Branch: ${ENVBRANCH}"
+    ENVDEPLOYURL=$(env_deployurl "$ENVNAME")
+    ENVTAGGING=$(env_tagging "$ENVNAME")
+    echo " - Name: ${ENVNAME}, Branch: ${ENVBRANCH}, Deploy URL: $ENVDEPLOYURL, Tag on Deploy: $ENVTAGGING"
   done
   echo ""
 }
@@ -1429,6 +1427,19 @@ function env_branch {
   ENVNAME=$1
 	git config --get "environment.$ENVNAME.branch"
 }
+
+# -- fetch deployurl for a given environment
+function env_deployurl {
+  ENVNAME=$1
+	git config --get "environment.$ENVNAME.deployurl"
+}
+
+# -- fetch tagging for a given environment
+function env_tagging {
+  ENVNAME=$1
+	git config --get "environment.$ENVNAME.tagging"
+}
+
 
 # -- remove all the branches from the release
 function clearenvironments {
